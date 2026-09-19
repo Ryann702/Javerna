@@ -1,0 +1,241 @@
+@startuml
+skinparam classAttributeIconSize 0
+
+package "Cavernas" {
+    class Caverna {
+        - id: Long
+        - nomeOficial: String
+        - codigoAmbiental: String
+        - municipio: String
+        - unidadeFederativa: String
+        - altitude: BigDecimal
+        - extensaoConhecida: BigDecimal
+        - dataUltimaInspecao: LocalDate
+        - acessoPermitido: boolean
+        - localizacao: Localizacao
+    }
+
+    class SetorPesquisa {
+        - id: Long
+        - denominacao: String
+        - nivelDificuldade: NivelDificuldade
+        - profundidadeMaxima: BigDecimal
+        - extensaoAproximada: BigDecimal
+        - descricao: String
+        - riscoInundacao: boolean
+        - condicaoAtual: String
+    }
+
+    class Localizacao <<embeddable>> {
+        - latitude: BigDecimal
+        - longitude: BigDecimal
+        - datumGeodesico: String
+    }
+}
+
+package "Pessoas" {
+    abstract class Pessoa {
+        - id: Long
+        - nome: String
+        - cpf: String
+        - dataNascimento: LocalDate
+        - email: String
+        - telefone: String
+        - ativa: boolean
+        - endereco: Endereco
+    }
+
+    class Pesquisador {
+        - registroInstitucional: String
+        - areaPrincipalPesquisa: String
+        - titulacao: String
+        - valorDiarioBolsa: BigDecimal
+    }
+
+    class GuiaEspeleologia {
+        - numeroCredenciamento: String
+        - nivelCertificacao: String
+        - validadeCertificacao: LocalDate
+        - expedicoesConcluidas: Integer
+    }
+
+    class Endereco <<embeddable>> {
+        - logradouro: String
+        - numero: String
+        - complemento: String
+        - bairro: String
+        - cidade: String
+        - unidadeFederativa: String
+        - cep: String
+    }
+}
+
+package "Expedicoes" {
+    class Expedicao {
+        - id: Long
+        - codigo: String
+        - titulo: String
+        - objetivo: String
+        - inicioPrevisto: LocalDateTime
+        - terminoPrevisto: LocalDateTime
+        - orcamentoAprovado: BigDecimal
+        - custoRealizado: BigDecimal
+        - quantidadeMaximaParticipantes: Integer
+        - situacao: SituacaoExpedicao
+        - cancelamentoEmergencial: boolean
+    }
+
+    class PlanoSeguranca {
+        - id: Long
+        - procedimentosEvacuacao: String
+        - pontoExternoEncontro: String
+        - tempoMaximoSemComunicacao: Integer
+        - telefoneEmergencia: String
+        - necessitaEquipeMedica: boolean
+        - mapaRota: byte[]
+    }
+
+    class AutorizacaoAmbiental {
+        - id: Long
+        - numero: String
+        - orgaoEmissor: String
+        - dataEmissao: LocalDate
+        - dataValidade: LocalDate
+        - situacao: SituacaoAutorizacao
+        - observacoes: String
+        - arquivoAssinado: byte[]
+    }
+
+    class ParticipacaoExpedicao {
+        - id: Long
+        - papel: PapelParticipante
+        - dataConfirmacao: LocalDate
+        - valorDiaria: BigDecimal
+        - quantidadePrevistaDias: Integer
+        - presencaConfirmada: boolean
+        - observacoes: String
+    }
+
+    class RelatorioFinal {
+        - id: Long
+        - titulo: String
+        - resumo: String
+        - dataSubmissao: LocalDate
+        - numeroTotalPaginas: Integer
+        - situacao: SituacaoRelatorio
+        - arquivoCompleto: byte[]
+        - publicacaoAutorizada: boolean
+    }
+}
+
+package "Equipamentos" {
+    class Equipamento {
+        - id: Long
+        - codigoPatrimonial: String
+        - nome: String
+        - tipo: TipoEquipamento
+        - fabricante: String
+        - valorAquisicao: BigDecimal
+        - dataCompra: LocalDate
+        - dataUltimaManutencao: LocalDate
+        - situacaoOperacional: SituacaoOperacional
+        - exigeCalibracao: boolean
+    }
+
+    class UtilizacaoEquipamento {
+        - id: Long
+        - dataHoraRetirada: LocalDateTime
+        - previsaoDevolucao: LocalDateTime
+        - dataHoraDevolucao: LocalDateTime
+        - estadoSaida: String
+        - estadoRetorno: String
+        - custoAvaria: BigDecimal
+    }
+}
+
+package "Coletas" {
+    class ColetaCientifica {
+        - id: Long
+        - dataHora: LocalDateTime
+        - metodoEmpregado: String
+        - descricaoPonto: String
+        - temperatura: BigDecimal
+        - umidadeRelativa: BigDecimal
+        - profundidade: BigDecimal
+        - observacoes: String
+        - situacaoValidacao: String
+    }
+
+    class Amostra {
+        - id: Long
+        - codigoCampo: String
+        - categoria: CategoriaAmostra
+        - massaOuVolume: BigDecimal
+        - unidadeMedida: String
+        - dataAcondicionamento: LocalDate
+        - condicaoConservacao: CondicaoConservacao
+        - materialPerigoso: boolean
+        - fotografia: byte[]
+        - observacoes: String
+    }
+}
+
+enum SituacaoExpedicao {
+    PLANEJADA
+    AUTORIZADA
+    EM_ANDAMENTO
+    CONCLUIDA
+    CANCELADA
+}
+
+enum NivelDificuldade {
+    BAIXO
+    MODERADO
+    ALTO
+    EXTREMO
+}
+
+enum TipoEquipamento
+enum SituacaoOperacional
+enum PapelParticipante
+enum CategoriaAmostra
+enum CondicaoConservacao
+enum SituacaoAutorizacao
+enum SituacaoRelatorio
+
+Pessoa <|-- Pesquisador
+Pessoa <|-- GuiaEspeleologia
+Pessoa *-- Endereco
+Caverna *-- Localizacao
+
+Caverna "1" -- "0..*" SetorPesquisa: possui >
+Caverna "1" -- "0..*" Expedicao: recebe >
+Expedicao "0..*" -- "0..*" SetorPesquisa: abrange >
+
+Expedicao "1" *-- "1" PlanoSeguranca
+Expedicao "1" *-- "0..1" AutorizacaoAmbiental
+Expedicao "1" *-- "0..1" RelatorioFinal
+
+Expedicao "1" -- "0..*" ParticipacaoExpedicao
+Pessoa "1" -- "0..*" ParticipacaoExpedicao
+
+Expedicao "1" -- "0..*" UtilizacaoEquipamento
+Equipamento "1" -- "0..*" UtilizacaoEquipamento
+Pessoa "1" -- "0..*" UtilizacaoEquipamento: responsavel >
+
+Expedicao "1" -- "0..*" ColetaCientifica
+SetorPesquisa "1" -- "0..*" ColetaCientifica
+Pesquisador "1" -- "0..*" ColetaCientifica: responsavel >
+ColetaCientifica "1" *-- "0..*" Amostra
+
+note right of ParticipacaoExpedicao
+  Uma pessoa nao pode ser cadastrada
+  duas vezes na mesma expedicao.
+end note
+
+note right of Pessoa
+  A estrategia de heranca sera
+  definida na etapa de implementacao.
+end note
+
+@enduml
