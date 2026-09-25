@@ -163,7 +163,7 @@ package "Coletas" {
         - umidadeRelativa: BigDecimal
         - profundidade: BigDecimal
         - observacoes: String
-        - situacaoValidacao: String
+        - situacaoValidacao: SituacaoValidacaoColeta
     }
 
     class Amostra {
@@ -195,13 +195,69 @@ enum NivelDificuldade {
     EXTREMO
 }
 
-enum TipoEquipamento
-enum SituacaoOperacional
-enum PapelParticipante
-enum CategoriaAmostra
-enum CondicaoConservacao
-enum SituacaoAutorizacao
-enum SituacaoRelatorio
+enum TipoEquipamento {
+    ILUMINACAO
+    COMUNICACAO
+    MEDICAO
+    SEGURANCA
+    COLETA
+    TRANSPORTE
+    OUTRO
+}
+
+enum SituacaoOperacional {
+    DISPONIVEL
+    EM_USO
+    EM_MANUTENCAO
+    INDISPONIVEL
+    DESCARTADO
+}
+
+enum PapelParticipante {
+    COORDENADOR
+    PESQUISADOR
+    GUIA
+    TECNICO
+    APOIO
+}
+
+enum CategoriaAmostra {
+    ROCHA
+    SOLO
+    AGUA
+    SEDIMENTO
+    BIOLOGICA
+    OUTRA
+}
+
+enum CondicaoConservacao {
+    AMBIENTE
+    REFRIGERADA
+    CONGELADA
+    PRESERVADA_QUIMICAMENTE
+}
+
+enum SituacaoAutorizacao {
+    PENDENTE
+    EMITIDA
+    EXPIRADA
+    SUSPENSA
+    REVOGADA
+}
+
+enum SituacaoRelatorio {
+    RASCUNHO
+    SUBMETIDO
+    EM_ANALISE
+    APROVADO
+    REJEITADO
+}
+
+enum SituacaoValidacaoColeta {
+    PENDENTE
+    VALIDADA
+    REJEITADA
+}
 
 Pessoa <|-- Pesquisador
 Pessoa <|-- GuiaEspeleologia
