@@ -1,6 +1,5 @@
 @startuml
 skinparam classAttributeIconSize 0
-skinparam linetype ortho
 
 package "Cavernas" {
     class Caverna {
@@ -145,9 +144,9 @@ package "Equipamentos" {
 
     class UtilizacaoEquipamento {
         - id: Long
-        - dataHoraRetirada: Instant
-        - previsaoDevolucao: Instant
-        - dataHoraDevolucao: Instant
+        - dataHoraRetirada: LocalDateTime
+        - previsaoDevolucao: LocalDateTime
+        - dataHoraDevolucao: LocalDateTime
         - estadoSaida: String
         - estadoRetorno: String
         - custoAvaria: BigDecimal
@@ -157,14 +156,14 @@ package "Equipamentos" {
 package "Coletas" {
     class ColetaCientifica {
         - id: Long
-        - dataHora: Instant
+        - dataHora: LocalDateTime
         - metodoEmpregado: String
         - descricaoPonto: String
         - temperatura: BigDecimal
         - umidadeRelativa: BigDecimal
         - profundidade: BigDecimal
         - observacoes: String
-        - situacaoValidacao: SituacaoValidacaoColeta
+        - situacaoValidacao: String
     }
 
     class Amostra {
@@ -196,69 +195,13 @@ enum NivelDificuldade {
     EXTREMO
 }
 
-enum TipoEquipamento {
-    ILUMINACAO
-    COMUNICACAO
-    MEDICAO
-    SEGURANCA
-    COLETA
-    TRANSPORTE
-    OUTRO
-}
-
-enum SituacaoOperacional {
-    DISPONIVEL
-    EM_USO
-    EM_MANUTENCAO
-    INDISPONIVEL
-    DESCARTADO
-}
-
-enum PapelParticipante {
-    COORDENADOR
-    PESQUISADOR
-    GUIA
-    TECNICO
-    APOIO
-}
-
-enum CategoriaAmostra {
-    ROCHA
-    SOLO
-    AGUA
-    SEDIMENTO
-    BIOLOGICA
-    OUTRA
-}
-
-enum CondicaoConservacao {
-    AMBIENTE
-    REFRIGERADA
-    CONGELADA
-    PRESERVADA_QUIMICAMENTE
-}
-
-enum SituacaoAutorizacao {
-    PENDENTE
-    EMITIDA
-    EXPIRADA
-    SUSPENSA
-    REVOGADA
-}
-
-enum SituacaoRelatorio {
-    RASCUNHO
-    SUBMETIDO
-    EM_ANALISE
-    APROVADO
-    REJEITADO
-}
-
-enum SituacaoValidacaoColeta {
-    PENDENTE
-    VALIDADA
-    REJEITADA
-}
+enum TipoEquipamento
+enum SituacaoOperacional
+enum PapelParticipante
+enum CategoriaAmostra
+enum CondicaoConservacao
+enum SituacaoAutorizacao
+enum SituacaoRelatorio
 
 Pessoa <|-- Pesquisador
 Pessoa <|-- GuiaEspeleologia
@@ -285,26 +228,14 @@ SetorPesquisa "1" -- "0..*" ColetaCientifica
 Pesquisador "1" -- "0..*" ColetaCientifica: responsavel >
 ColetaCientifica "1" *-- "0..*" Amostra
 
-note right of Pessoa
-  Heranca JPA: JOINED.
-  Participacoes e utilizacoes referenciam
-  a superclasse de forma polimorfica.
-end note
-
-note right of Expedicao
-  Deve possuir um plano de seguranca.
-  Todos os setores abrangidos devem
-  pertencer a sua caverna.
-end note
-
 note right of ParticipacaoExpedicao
-  Restricao unica:
-  (expedicao_id, pessoa_id).
+  Uma pessoa nao pode ser cadastrada
+  duas vezes na mesma expedicao.
 end note
 
-note right of PlanoSeguranca
-  Os campos binarios sao carregados
-  sob demanda por consultas especificas.
+note right of Pessoa
+  A estrategia de heranca sera
+  definida na etapa de implementacao.
 end note
 
 @enduml
