@@ -10,13 +10,17 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "setor_pesquisa")
@@ -54,4 +58,16 @@ public class SetorPesquisa {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "caverna_id", nullable = false)
     private Caverna caverna;
+
+    @ManyToMany(mappedBy = "setores", fetch = FetchType.LAZY)
+    @Setter(AccessLevel.NONE)
+    private Set<Expedicao> expedicoes = new HashSet<>();
+
+    void vincularExpedicao(Expedicao expedicao) {
+        expedicoes.add(expedicao);
+    }
+
+    void desvincularExpedicao(Expedicao expedicao) {
+        expedicoes.remove(expedicao);
+    }
 }

@@ -68,6 +68,10 @@ public class Caverna {
     @Setter(AccessLevel.NONE)
     private List<SetorPesquisa> setores = new ArrayList<>();
 
+    @OneToMany(mappedBy = "caverna", fetch = FetchType.LAZY)
+    @Setter(AccessLevel.NONE)
+    private List<Expedicao> expedicoes = new ArrayList<>();
+
     public void adicionarSetor(SetorPesquisa setor) {
         setores.add(setor);
         setor.setCaverna(this);
@@ -76,5 +80,10 @@ public class Caverna {
     public void removerSetor(SetorPesquisa setor) {
         setores.remove(setor);
         setor.setCaverna(null);
+    }
+
+    public void adicionarExpedicao(Expedicao expedicao) {
+        expedicoes.add(expedicao);
+        expedicao.setCaverna(this);
     }
 }

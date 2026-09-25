@@ -9,12 +9,17 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "pessoa")
@@ -48,4 +53,16 @@ public abstract class Pessoa {
 
     @Embedded
     private Endereco endereco;
+
+    @OneToMany(mappedBy = "pessoa", fetch = FetchType.LAZY)
+    @Setter(AccessLevel.NONE)
+    private List<ParticipacaoExpedicao> participacoes = new ArrayList<>();
+
+    void vincularParticipacao(ParticipacaoExpedicao participacao) {
+        participacoes.add(participacao);
+    }
+
+    void desvincularParticipacao(ParticipacaoExpedicao participacao) {
+        participacoes.remove(participacao);
+    }
 }
