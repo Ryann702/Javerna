@@ -1,16 +1,13 @@
 # Javerna
 
-Projeto da disciplina de Programação para a Web 3.
+Projeto desenvolvido na disciplina de Programação para a Web 3 do curso de
+Engenharia de Software do IFPB.
 
-O objetivo é modelar um sistema de expedições científicas em cavernas usando
-Java, JPA e PostgreSQL.
+O Javerna representa o domínio de expedições científicas em cavernas. O modelo
+inclui cavernas, setores de pesquisa, participantes, equipamentos, coletas e
+amostras.
 
-Por enquanto, o repositório contém a configuração inicial do projeto e o
-diagrama de classes. As entidades serão implementadas nas próximas etapas.
-
-## Diagrama
-
-O diagrama está no arquivo `doc/diagrama-de-classes.puml`.
+O projeto está na etapa de modelagem do domínio e configuração da persistência.
 
 ## Tecnologias
 
@@ -21,12 +18,22 @@ O diagrama está no arquivo `doc/diagrama-de-classes.puml`.
 - Maven
 - Lombok
 
+## Estrutura
+
+- `doc/diagrama-de-classes.puml`: diagrama de classes do domínio;
+- `src/main/resources/META-INF/persistence.xml`: configuração da unidade de
+  persistência;
+- `pom.xml`: dependências e configuração do projeto Maven.
+
 ## Banco de dados
 
-A unidade de persistência `javernaPU` usa o banco `javerna`. O usuário e a senha
-do PostgreSQL podem ser alterados no `persistence.xml`.
+A unidade de persistência `javernaPU` está configurada para o banco `javerna`,
+na porta `5432`. As credenciais podem ser alteradas no arquivo
+`persistence.xml`.
 
 ## Compilação
+
+Com Java 17 e Maven instalados, execute:
 
 ```bash
 mvn clean compile
