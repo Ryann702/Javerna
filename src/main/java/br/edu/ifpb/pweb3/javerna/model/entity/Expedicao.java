@@ -124,6 +124,24 @@ public class Expedicao {
     @Setter(AccessLevel.NONE)
     private List<ParticipacaoExpedicao> participacoes = new ArrayList<>();
 
+    @OneToMany(
+            mappedBy = "expedicao",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY
+    )
+    @Setter(AccessLevel.NONE)
+    private List<UtilizacaoEquipamento> utilizacoesEquipamento = new ArrayList<>();
+
+    @OneToMany(
+            mappedBy = "expedicao",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY
+    )
+    @Setter(AccessLevel.NONE)
+    private List<ColetaCientifica> coletas = new ArrayList<>();
+
     public void adicionarSetor(SetorPesquisa setor) {
         Objects.requireNonNull(setor, "O setor e obrigatorio");
 
@@ -178,6 +196,39 @@ public class Expedicao {
         participacoes.remove(participacao);
         participacao.getPessoa().desvincularParticipacao(participacao);
         participacao.setExpedicao(null);
+    }
+
+    public void adicionarUtilizacaoEquipamento(UtilizacaoEquipamento utilizacao) {
+        Objects.requireNonNull(utilizacao, "A utilizacao de equipamento e obrigatoria");
+        Objects.requireNonNull(utilizacao.getEquipamento(), "O equipamento e obrigatorio");
+
+        utilizacoesEquipamento.add(utilizacao);
+        utilizacao.setExpedicao(this);
+        utilizacao.getEquipamento().vincularUtilizacao(utilizacao);
+    }
+
+    public void removerUtilizacaoEquipamento(UtilizacaoEquipamento utilizacao) {
+        utilizacoesEquipamento.remove(utilizacao);
+        utilizacao.getEquipamento().desvincularUtilizacao(utilizacao);
+        utilizacao.setExpedicao(null);
+    }
+
+    public void adicionarColeta(ColetaCientifica coleta) {
+        Objects.requireNonNull(coleta, "A coleta e obrigatoria");
+        Objects.requireNonNull(coleta.getSetor(), "O setor da coleta e obrigatorio");
+        Objects.requireNonNull(coleta.getPesquisadorResponsavel(), "O pesquisador responsavel e obrigatorio");
+
+        coletas.add(coleta);
+        coleta.setExpedicao(this);
+        coleta.getSetor().vincularColeta(coleta);
+        coleta.getPesquisadorResponsavel().vincularColeta(coleta);
+    }
+
+    public void removerColeta(ColetaCientifica coleta) {
+        coletas.remove(coleta);
+        coleta.getSetor().desvincularColeta(coleta);
+        coleta.getPesquisadorResponsavel().desvincularColeta(coleta);
+        coleta.setExpedicao(null);
     }
 
     private boolean pertenceAMesmaCaverna(SetorPesquisa setor) {

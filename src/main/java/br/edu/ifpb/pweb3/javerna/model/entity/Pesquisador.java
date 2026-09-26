@@ -2,13 +2,18 @@ package br.edu.ifpb.pweb3.javerna.model.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrimaryKeyJoinColumn;
 import jakarta.persistence.Table;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "pesquisador")
@@ -29,4 +34,16 @@ public class Pesquisador extends Pessoa {
 
     @Column(name = "valor_diario_bolsa", nullable = false, precision = 12, scale = 2)
     private BigDecimal valorDiarioBolsa;
+
+    @OneToMany(mappedBy = "pesquisadorResponsavel", fetch = FetchType.LAZY)
+    @Setter(AccessLevel.NONE)
+    private List<ColetaCientifica> coletasResponsavel = new ArrayList<>();
+
+    void vincularColeta(ColetaCientifica coleta) {
+        coletasResponsavel.add(coleta);
+    }
+
+    void desvincularColeta(ColetaCientifica coleta) {
+        coletasResponsavel.remove(coleta);
+    }
 }

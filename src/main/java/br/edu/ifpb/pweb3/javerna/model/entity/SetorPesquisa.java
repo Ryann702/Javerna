@@ -12,6 +12,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -19,7 +20,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -63,11 +66,23 @@ public class SetorPesquisa {
     @Setter(AccessLevel.NONE)
     private Set<Expedicao> expedicoes = new HashSet<>();
 
+    @OneToMany(mappedBy = "setor", fetch = FetchType.LAZY)
+    @Setter(AccessLevel.NONE)
+    private List<ColetaCientifica> coletas = new ArrayList<>();
+
     void vincularExpedicao(Expedicao expedicao) {
         expedicoes.add(expedicao);
     }
 
     void desvincularExpedicao(Expedicao expedicao) {
         expedicoes.remove(expedicao);
+    }
+
+    void vincularColeta(ColetaCientifica coleta) {
+        coletas.add(coleta);
+    }
+
+    void desvincularColeta(ColetaCientifica coleta) {
+        coletas.remove(coleta);
     }
 }
