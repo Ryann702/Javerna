@@ -1,6 +1,5 @@
 package br.edu.ifpb.pweb3.javerna.model.entity;
 
-import jakarta.persistence.Basic;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -43,7 +42,6 @@ public class PlanoSeguranca {
     private boolean necessitaEquipeMedica;
 
     @Lob
-    @Basic(fetch = FetchType.LAZY)
     @Column(name = "mapa_rota", nullable = false)
     private byte[] mapaRota;
 

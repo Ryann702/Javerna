@@ -1,7 +1,6 @@
 package br.edu.ifpb.pweb3.javerna.model.entity;
 
 import br.edu.ifpb.pweb3.javerna.model.enums.SituacaoRelatorio;
-import jakarta.persistence.Basic;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -49,7 +48,6 @@ public class RelatorioFinal {
     private SituacaoRelatorio situacao;
 
     @Lob
-    @Basic(fetch = FetchType.LAZY)
     @Column(name = "arquivo_completo", nullable = false)
     private byte[] arquivoCompleto;
 

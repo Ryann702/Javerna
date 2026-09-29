@@ -290,8 +290,8 @@ note right of ParticipacaoExpedicao
 end note
 
 note right of Pessoa
-  A estrategia de heranca sera
-  definida na etapa de implementacao.
+  Heranca mapeada com JOINED.
+  As subclasses usam pessoa_id como PK e FK.
 end note
 
 @enduml
