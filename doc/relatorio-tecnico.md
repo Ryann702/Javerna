@@ -128,8 +128,15 @@ participação única, cascatas, remoção de órfãos e commit/rollback. O test
 equipamentos inclui utilização aberta, devolução com sobreposição e devolução
 anterior ao período consultado.
 
-Na verificação desta entrega, `mvn clean verify` concluiu com 20 testes, sem
+Após incluir a carga inicial, `mvn verify` concluiu com 21 testes, sem
 falhas ou erros, usando PostgreSQL 14.15 temporário.
+
+A carga demonstrativa é executada explicitamente pelo argumento `--povoar`.
+Ela grava dados fictícios em uma única transação JTA e não modifica registros
+quando as duas expedições de demonstração já existem. O teste da carga verifica
+as seis consultas, repetição sem duplicação, preservação de dados existentes e
+rollback integral em caso de falha. Os anexos são PDFs demonstrativos, sem
+validade documental; as fotografias das amostras permanecem opcionais e ausentes.
 
 Os testes geram o esquema em `target/schema-postgresql.sql` e o SQL capturado em
 `target/consultas-verificadas.sql`. Os pontos de interrogação representam os
