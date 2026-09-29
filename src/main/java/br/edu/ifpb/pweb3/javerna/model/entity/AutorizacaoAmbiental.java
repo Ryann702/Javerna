@@ -1,7 +1,6 @@
 package br.edu.ifpb.pweb3.javerna.model.entity;
 
 import br.edu.ifpb.pweb3.javerna.model.enums.SituacaoAutorizacao;
-import jakarta.persistence.Basic;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -52,7 +51,6 @@ public class AutorizacaoAmbiental {
     private String observacoes;
 
     @Lob
-    @Basic(fetch = FetchType.LAZY)
     @Column(name = "arquivo_assinado", nullable = false)
     private byte[] arquivoAssinado;
 

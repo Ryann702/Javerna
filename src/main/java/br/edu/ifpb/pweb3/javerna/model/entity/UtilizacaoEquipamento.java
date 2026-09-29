@@ -9,6 +9,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -59,4 +61,16 @@ public class UtilizacaoEquipamento {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "pessoa_responsavel_id", nullable = false)
     private Pessoa responsavel;
+
+    @PrePersist
+    @PreUpdate
+    private void validar() {
+        if (dataHoraRetirada != null && ((previsaoDevolucao != null && previsaoDevolucao.isBefore(dataHoraRetirada))
+                || (dataHoraDevolucao != null && dataHoraDevolucao.isBefore(dataHoraRetirada)))) {
+            throw new IllegalStateException("A devolucao nao pode ser anterior a retirada");
+        }
+        if (custoAvaria != null && custoAvaria.signum() < 0) {
+            throw new IllegalStateException("O custo da avaria nao pode ser negativo");
+        }
+    }
 }

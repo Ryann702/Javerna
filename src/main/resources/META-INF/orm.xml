@@ -8,8 +8,9 @@
 
     <named-query name="Expedicao.listarPorPeriodoESituacao">
         <query>
-            SELECT e FROM Expedicao e
-            JOIN FETCH e.caverna c
+            SELECT new br.edu.ifpb.pweb3.javerna.model.dto.ExpedicaoResumo(
+                e.codigo, e.titulo, c.nomeOficial, e.inicioPrevisto, e.terminoPrevisto, e.situacao)
+            FROM Expedicao e JOIN e.caverna c
             WHERE e.inicioPrevisto &gt;= :dataInicio
               AND e.terminoPrevisto &lt;= :dataFim
               AND e.situacao = :situacao
@@ -17,13 +18,23 @@
         </query>
     </named-query>
 
-    <named-query name="Expedicao.buscarDetalhesComParticipantes">
+    <named-query name="Expedicao.buscarDetalhes">
         <query>
-            SELECT DISTINCT e FROM Expedicao e
-            JOIN FETCH e.caverna
-            LEFT JOIN FETCH e.participacoes p
-            LEFT JOIN FETCH p.pessoa
+            SELECT new br.edu.ifpb.pweb3.javerna.model.dto.ExpedicaoDetalhes(
+                e.id, e.codigo, e.titulo, e.objetivo, c.nomeOficial, e.inicioPrevisto,
+                e.terminoPrevisto, e.orcamentoAprovado, e.custoRealizado,
+                e.quantidadeMaximaParticipantes, e.situacao, e.cancelamentoEmergencial)
+            FROM Expedicao e JOIN e.caverna c
             WHERE e.id = :id
+        </query>
+    </named-query>
+
+    <named-query name="ParticipacaoExpedicao.listarResumos">
+        <query>
+            SELECT new br.edu.ifpb.pweb3.javerna.model.dto.ParticipanteResumo(
+                p.pessoa.id, p.pessoa.nome, p.papel)
+            FROM ParticipacaoExpedicao p WHERE p.expedicao.id = :id
+            ORDER BY p.pessoa.nome, p.pessoa.id
         </query>
     </named-query>
 
@@ -44,12 +55,28 @@
               AND NOT EXISTS (
                   SELECT u FROM UtilizacaoEquipamento u
                   WHERE u.equipamento = eq
-                    AND u.dataHoraDevolucao IS NULL
                     AND u.dataHoraRetirada &lt;= :fim
-                    AND u.previsaoDevolucao &gt;= :inicio
+                    AND COALESCE(u.dataHoraDevolucao, u.previsaoDevolucao) &gt;= :inicio
               )
             ORDER BY eq.nome
         </query>
     </named-query>
 
+    <named-query name="Amostra.listarPorColeta">
+        <query>
+            SELECT a FROM Amostra a WHERE a.coleta.id = :coletaId ORDER BY a.codigoCampo
+        </query>
+    </named-query>
+
+    <named-query name="PlanoSeguranca.baixarMapa">
+        <query>SELECT p.mapaRota FROM PlanoSeguranca p WHERE p.expedicao.id = :expedicaoId</query>
+    </named-query>
+
+    <named-query name="AutorizacaoAmbiental.baixarArquivo">
+        <query>SELECT a.arquivoAssinado FROM AutorizacaoAmbiental a WHERE a.expedicao.id = :expedicaoId</query>
+    </named-query>
+
+    <named-query name="RelatorioFinal.baixarArquivo">
+        <query>SELECT r.arquivoCompleto FROM RelatorioFinal r WHERE r.expedicao.id = :expedicaoId</query>
+    </named-query>
 </entity-mappings>

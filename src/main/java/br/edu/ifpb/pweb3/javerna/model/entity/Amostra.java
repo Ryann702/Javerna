@@ -2,7 +2,6 @@ package br.edu.ifpb.pweb3.javerna.model.entity;
 
 import br.edu.ifpb.pweb3.javerna.model.enums.CategoriaAmostra;
 import br.edu.ifpb.pweb3.javerna.model.enums.CondicaoConservacao;
-import jakarta.persistence.Basic;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -58,7 +57,6 @@ public class Amostra {
     private boolean materialPerigoso;
 
     @Lob
-    @Basic(fetch = FetchType.LAZY)
     @Column(name = "fotografia")
     private byte[] fotografia;
 

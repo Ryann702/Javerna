@@ -181,6 +181,9 @@ public class Expedicao {
     public void adicionarParticipacao(ParticipacaoExpedicao participacao) {
         Objects.requireNonNull(participacao, "A participacao e obrigatoria");
         Objects.requireNonNull(participacao.getPessoa(), "A pessoa participante e obrigatoria");
+        if (quantidadeMaximaParticipantes != null && participacoes.size() >= quantidadeMaximaParticipantes) {
+            throw new IllegalArgumentException("A expedicao atingiu o limite de participantes");
+        }
 
         if (participacoes.stream().anyMatch(atual -> mesmaPessoa(
                 atual.getPessoa(), participacao.getPessoa()))) {
@@ -201,6 +204,7 @@ public class Expedicao {
     public void adicionarUtilizacaoEquipamento(UtilizacaoEquipamento utilizacao) {
         Objects.requireNonNull(utilizacao, "A utilizacao de equipamento e obrigatoria");
         Objects.requireNonNull(utilizacao.getEquipamento(), "O equipamento e obrigatorio");
+        Objects.requireNonNull(utilizacao.getResponsavel(), "O responsavel pela retirada e obrigatorio");
 
         utilizacoesEquipamento.add(utilizacao);
         utilizacao.setExpedicao(this);
@@ -217,6 +221,9 @@ public class Expedicao {
         Objects.requireNonNull(coleta, "A coleta e obrigatoria");
         Objects.requireNonNull(coleta.getSetor(), "O setor da coleta e obrigatorio");
         Objects.requireNonNull(coleta.getPesquisadorResponsavel(), "O pesquisador responsavel e obrigatorio");
+        if (!pertenceAMesmaCaverna(coleta.getSetor())) {
+            throw new IllegalArgumentException("O setor da coleta deve pertencer a caverna da expedicao");
+        }
 
         coletas.add(coleta);
         coleta.setExpedicao(this);
@@ -232,6 +239,9 @@ public class Expedicao {
     }
 
     private boolean pertenceAMesmaCaverna(SetorPesquisa setor) {
+        if (caverna == null || setor.getCaverna() == null) {
+            return false;
+        }
         if (caverna == setor.getCaverna()) {
             return true;
         }
@@ -255,9 +265,20 @@ public class Expedicao {
 
     @PrePersist
     @PreUpdate
-    private void validarPlanoSeguranca() {
+    private void validar() {
         if (planoSeguranca == null) {
             throw new IllegalStateException("A expedicao deve possuir um plano de seguranca");
+        }
+        if (inicioPrevisto != null && terminoPrevisto != null && terminoPrevisto.isBefore(inicioPrevisto)) {
+            throw new IllegalStateException("O termino da expedicao nao pode ser anterior ao inicio");
+        }
+        if (quantidadeMaximaParticipantes != null && (quantidadeMaximaParticipantes <= 0
+                || participacoes.size() > quantidadeMaximaParticipantes)) {
+            throw new IllegalStateException("Quantidade maxima de participantes invalida");
+        }
+        if ((orcamentoAprovado != null && orcamentoAprovado.signum() < 0)
+                || (custoRealizado != null && custoRealizado.signum() < 0)) {
+            throw new IllegalStateException("Orcamento e custo nao podem ser negativos");
         }
     }
 }
