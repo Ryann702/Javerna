@@ -65,6 +65,34 @@ mvn compile exec:java -Dexec.args="2026-01-01T00:00 2026-12-31T23:59 PLANEJADA"
 Essa aplicação aceita as variáveis `JAVERNA_DB_URL`, `JAVERNA_DB_USER` e
 `JAVERNA_DB_PASSWORD` para substituir as credenciais locais do `persistence.xml`.
 
+## Carga inicial
+
+Com o banco `javerna` criado e o PostgreSQL em execução:
+
+```bash
+mvn compile exec:java -Dexec.args="--povoar"
+```
+
+O comando usa a mesma conexão e as mesmas variáveis de ambiente da consulta.
+Cria uma caverna, dois setores, um pesquisador, um guia, três equipamentos,
+duas expedições com planos e participantes, duas coletas e duas amostras.
+Todos os dados são fictícios, inclusive CPF, contatos e coordenadas.
+
+- `DEMO-EXP-001`: concluída em 10/06/2026, com autorização, relatório, coletas
+  e uma utilização de lanterna já devolvida;
+- `DEMO-EXP-002`: planejada para 10/10/2026, sem coletas ou relatório;
+- de 10/06/2026 às 09:00 até 17:00, apenas o medidor está disponível: a lanterna
+  tem uma utilização no período e o rádio está em manutenção.
+
+Os planos, a autorização e o relatório contêm um PDF demonstrativo de uma página,
+sem mapa real ou assinatura. As fotografias das amostras ficam ausentes.
+Os IDs são gerados pelo banco; localize as expedições pelos códigos acima.
+
+A carga inteira usa uma transação JTA. Ao executar novamente, se as duas
+expedições já existirem, o comando não insere nem altera registros. Se apenas
+uma existir, ele interrompe a operação para revisão manual. Códigos ou CPFs
+conflitantes também provocam rollback, sem apagar dados existentes.
+
 ## Testes
 
 ```bash
