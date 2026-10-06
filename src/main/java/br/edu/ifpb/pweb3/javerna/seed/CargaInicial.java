@@ -16,9 +16,17 @@ public final class CargaInicial {
     private CargaInicial() { }
 
     public static boolean povoar(EntityManager em) {
+        List<String> codigos = List.of(
+                "DEMO-EXP-001", "DEMO-EXP-002", "DEMO-EXP-003",
+                "DEMO-EXP-004", "DEMO-EXP-005");
         long existentes = em.createQuery("select count(e) from Expedicao e where e.codigo in :codigos", Long.class)
-                .setParameter("codigos", List.of("DEMO-EXP-001", "DEMO-EXP-002")).getSingleResult();
-        if (existentes == 2) return false;
+                .setParameter("codigos", codigos).getSingleResult();
+        if (existentes == codigos.size()) return false;
+        if (existentes == 2) {
+            criarCargaComplementar(em, documento());
+            em.flush();
+            return true;
+        }
         if (existentes != 0) {
             throw new IllegalStateException("Carga demonstrativa incompleta. Confira as expedicoes DEMO antes de executar novamente.");
         }
@@ -100,8 +108,127 @@ public final class CargaInicial {
         Expedicao planejada = expedicao(caverna, entrada, "DEMO-EXP-002", LocalDate.of(2026, 10, 10), documento);
         participantes(planejada, pesquisador, guia);
         em.persist(planejada);
+
+        criarCargaComplementar(em, documento);
         em.flush();
         return true;
+    }
+
+    private static void criarCargaComplementar(EntityManager em, byte[] documento) {
+        Caverna cristal = new Caverna();
+        cristal.setCodigoAmbiental("DEMO-CAV-002");
+        cristal.setNomeOficial("Caverna Cristalina (ficticia)");
+        cristal.setMunicipio("Areia");
+        cristal.setUnidadeFederativa("PB");
+        cristal.setAltitude(new BigDecimal("520.00"));
+        cristal.setExtensaoConhecida(new BigDecimal("1250.00"));
+        cristal.setDataUltimaInspecao(LocalDate.of(2026, 6, 18));
+        cristal.setAcessoPermitido(true);
+        cristal.setLocalizacao(new Localizacao(
+                new BigDecimal("-6.960000"), new BigDecimal("-35.700000"), "SIRGAS2000"));
+        SetorPesquisa salaoCristais = setor("Salao dos cristais", NivelDificuldade.MODERADO, "25.00");
+        SetorPesquisa lagoSubterraneo = setor("Lago subterraneo", NivelDificuldade.ALTO, "42.00");
+        SetorPesquisa galeriaSecundaria = setor("Galeria secundaria sem coleta", NivelDificuldade.BAIXO, "12.00");
+        cristal.adicionarSetor(salaoCristais);
+        cristal.adicionarSetor(lagoSubterraneo);
+        cristal.adicionarSetor(galeriaSecundaria);
+        em.persist(cristal);
+
+        Caverna semExpedicao = new Caverna();
+        semExpedicao.setCodigoAmbiental("DEMO-CAV-003");
+        semExpedicao.setNomeOficial("Caverna do Silencio (ficticia)");
+        semExpedicao.setMunicipio("Sousa");
+        semExpedicao.setUnidadeFederativa("PB");
+        semExpedicao.setAltitude(new BigDecimal("310.00"));
+        semExpedicao.setExtensaoConhecida(new BigDecimal("430.00"));
+        semExpedicao.setDataUltimaInspecao(LocalDate.of(2026, 4, 2));
+        semExpedicao.setAcessoPermitido(false);
+        semExpedicao.setLocalizacao(new Localizacao(
+                new BigDecimal("-6.760000"), new BigDecimal("-38.230000"), "SIRGAS2000"));
+        semExpedicao.adicionarSetor(setor("Fissura interditada", NivelDificuldade.EXTREMO, "65.00"));
+        em.persist(semExpedicao);
+
+        Pesquisador biologo = new Pesquisador();
+        pessoa(biologo, "Carlos Biologia (ficticio)", "00000000003");
+        biologo.setRegistroInstitucional("DEMO-PES-002");
+        biologo.setAreaPrincipalPesquisa("Biologia");
+        biologo.setTitulacao("Mestrado");
+        biologo.setValorDiarioBolsa(new BigDecimal("130.00"));
+        em.persist(biologo);
+
+        Pesquisador semColeta = new Pesquisador();
+        pessoa(semColeta, "Daniela Cartografia (ficticia)", "00000000004");
+        semColeta.setRegistroInstitucional("DEMO-PES-003");
+        semColeta.setAreaPrincipalPesquisa("Cartografia");
+        semColeta.setTitulacao("Graduacao");
+        semColeta.setValorDiarioBolsa(new BigDecimal("110.00"));
+        em.persist(semColeta);
+
+        GuiaEspeleologia guia = new GuiaEspeleologia();
+        pessoa(guia, "Elisa Guia (ficticia)", "00000000005");
+        guia.setNumeroCredenciamento("DEMO-GUI-002");
+        guia.setNivelCertificacao("Intermediario");
+        guia.setValidadeCertificacao(LocalDate.of(2029, 6, 30));
+        guia.setExpedicoesConcluidas(8);
+        em.persist(guia);
+
+        Equipamento camera = equipamento(
+                "DEMO-EQP-004", "Camera termica", TipoEquipamento.MEDICAO, SituacaoOperacional.EM_USO);
+        Equipamento kitColeta = equipamento(
+                "DEMO-EQP-005", "Kit de coleta", TipoEquipamento.COLETA, SituacaoOperacional.INDISPONIVEL);
+        Equipamento corda = equipamento(
+                "DEMO-EQP-006", "Corda de seguranca", TipoEquipamento.SEGURANCA, SituacaoOperacional.EM_MANUTENCAO);
+        em.persist(camera);
+        em.persist(kitColeta);
+        em.persist(corda);
+
+        Expedicao autorizada = expedicao(
+                cristal, salaoCristais, "DEMO-EXP-003", LocalDate.of(2026, 7, 15), documento);
+        autorizada.setSituacao(SituacaoExpedicao.AUTORIZADA);
+        autorizada.adicionarSetor(lagoSubterraneo);
+        participantes(autorizada, biologo, guia);
+        coleta(autorizada, salaoCristais, biologo, "DEMO-AMO-003", true);
+        coleta(autorizada, lagoSubterraneo, biologo, "DEMO-AMO-004", false);
+        autorizada.definirAutorizacaoAmbiental(autorizacao(
+                "DEMO-AUT-002", LocalDate.of(2026, 7, 1), LocalDate.of(2026, 8, 1), documento));
+
+        UtilizacaoEquipamento usoCamera = new UtilizacaoEquipamento();
+        usoCamera.setEquipamento(camera);
+        usoCamera.setResponsavel(guia);
+        usoCamera.setDataHoraRetirada(autorizada.getInicioPrevisto());
+        usoCamera.setPrevisaoDevolucao(autorizada.getTerminoPrevisto());
+        usoCamera.setEstadoSaida("Bom");
+        usoCamera.setCustoAvaria(BigDecimal.ZERO);
+        autorizada.adicionarUtilizacaoEquipamento(usoCamera);
+        em.persist(autorizada);
+
+        Expedicao cancelada = expedicao(
+                cristal, galeriaSecundaria, "DEMO-EXP-004", LocalDate.of(2026, 8, 20), documento);
+        cancelada.setSituacao(SituacaoExpedicao.CANCELADA);
+        cancelada.setCancelamentoEmergencial(true);
+        em.persist(cancelada);
+
+        Expedicao emAndamento = expedicao(
+                cristal, salaoCristais, "DEMO-EXP-005", LocalDate.of(2026, 9, 5), documento);
+        emAndamento.setSituacao(SituacaoExpedicao.EM_ANDAMENTO);
+        emAndamento.adicionarSetor(lagoSubterraneo);
+        participantes(emAndamento, biologo, guia);
+        coleta(emAndamento, salaoCristais, biologo, "DEMO-AMO-005", true);
+        coleta(emAndamento, lagoSubterraneo, biologo, "DEMO-AMO-006", true);
+        em.persist(emAndamento);
+    }
+
+    private static AutorizacaoAmbiental autorizacao(
+            String numero, LocalDate emissao, LocalDate validade, byte[] documento) {
+        AutorizacaoAmbiental autorizacao = new AutorizacaoAmbiental();
+        autorizacao.setNumero(numero);
+        autorizacao.setOrgaoEmissor("Orgao ficticio - demonstracao");
+        autorizacao.setDataEmissao(emissao);
+        autorizacao.setDataValidade(validade);
+        autorizacao.setSituacao(SituacaoAutorizacao.EMITIDA);
+        autorizacao.setArquivoAssinado(documento);
+        autorizacao.setObservacoes("Documento ficticio para demonstracao.");
+        return autorizacao;
     }
 
     private static SetorPesquisa setor(String nome, NivelDificuldade nivel, String profundidade) {
