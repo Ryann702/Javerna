@@ -30,7 +30,7 @@ public class ConsultaExpedicoes {
         try {
             if (povoar) {
                 boolean criada = new TransacaoJta(factory).executar(CargaInicial::povoar);
-                System.out.println(criada ? "Carga inicial criada: DEMO-EXP-001 e DEMO-EXP-002."
+                System.out.println(criada ? "Carga inicial criada ou ampliada: DEMO-EXP-001 ate DEMO-EXP-005."
                         : "Carga inicial ja existente. Nenhum dado foi alterado.");
                 return;
             }

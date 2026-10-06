@@ -34,6 +34,27 @@ class CargaInicialIntegracaoTest {
                 assertEquals(0, aposRollback);
                 assertTrue(tx.executar(CargaInicial::povoar));
                 tx.executar(em -> {
+                    assertEquals(5, em.createQuery(
+                            "select count(e) from Expedicao e where e.codigo like 'DEMO-EXP-%'", Long.class)
+                            .getSingleResult());
+                    assertEquals(1, em.createQuery("""
+                            select count(c)
+                            from Caverna c
+                            left join c.expedicoes e
+                            where c.codigoAmbiental = 'DEMO-CAV-003' and e is null
+                            """, Long.class).getSingleResult());
+                    assertEquals(1, em.createQuery("""
+                            select count(p)
+                            from Pesquisador p
+                            left join p.coletasResponsavel c
+                            where p.registroInstitucional = 'DEMO-PES-003' and c is null
+                            """, Long.class).getSingleResult());
+                    assertEquals(1, em.createQuery("""
+                            select count(s)
+                            from SetorPesquisa s
+                            left join s.coletas c
+                            where s.denominacao = 'Galeria secundaria sem coleta' and c is null
+                            """, Long.class).getSingleResult());
                     var repo = new ExpedicaoConsultaRepository(em);
                     var inicio = LocalDateTime.of(2026, 1, 1, 0, 0);
                     var fim = LocalDateTime.of(2026, 12, 31, 23, 59);
