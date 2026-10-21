@@ -115,6 +115,172 @@ usa-se a previsão. Os limites também são inclusivos. Essa consulta representa
 disponibilidade pelo cadastro atual e pelas datas registradas, não um histórico
 de mudanças da situação operacional nem uma garantia de devolução futura.
 
+## Problema N+1 e solução no projeto
+
+O problema N+1 ocorre quando uma consulta busca uma lista de entidades e o acesso
+aos seus relacionamentos provoca consultas adicionais para cada resultado.
+Por exemplo, ao listar coletas e depois acessar o setor e o pesquisador de cada
+uma, o Hibernate pode executar uma consulta inicial e outras para carregar as
+referências. A quantidade depende das referências distintas e do que já está
+carregado no contexto; com dois relacionamentos, pode ultrapassar 1 + N.
+
+Uma consulta que permitiria esse problema seria:
+
+```java
+var coletas = em.createQuery("""
+        SELECT c FROM ColetaCientifica c
+        WHERE c.expedicao.id = :expedicaoId
+        """, ColetaCientifica.class)
+        .setParameter("expedicaoId", expedicaoId)
+        .getResultList();
+
+for (ColetaCientifica coleta : coletas) {
+    System.out.println(coleta.getSetor().getDenominacao());
+    System.out.println(coleta.getPesquisadorResponsavel().getNome());
+}
+```
+
+Nesse exemplo, executado com o contexto aberto, os getters podem disparar novas
+buscas. Declarar `LAZY` apenas adia essas buscas; não elimina N+1. Trocar tudo
+para `EAGER` também não garante uma única consulta e pode carregar dados sem uso.
+
+A solução adotada na consulta `ColetaCientifica.listarPorExpedicao`, registrada
+em `src/main/resources/META-INF/orm.xml`, é buscar os dois relacionamentos
+necessários com `JOIN FETCH`:
+
+```jpql
+SELECT c FROM ColetaCientifica c
+JOIN FETCH c.setor
+JOIN FETCH c.pesquisadorResponsavel
+WHERE c.expedicao.id = :expedicaoId
+ORDER BY c.dataHora
+```
+
+Assim, coletas, setores e pesquisadores são obtidos no mesmo SELECT. Um `JOIN`
+comum permite filtrar ou projetar dados relacionados, mas não garante que a
+associação da entidade retornada seja inicializada; o `FETCH` solicita esse
+carregamento. Como setor e pesquisador são obrigatórios, usamos junções internas.
+Para uma associação opcional que precisasse ser carregada mantendo os registros
+sem correspondência, a alternativa seria `LEFT JOIN FETCH`.
+
+Nas listagens de expedições, a solução é a projeção em `ExpedicaoResumo`: a
+consulta seleciona diretamente os campos exibidos, incluindo o nome da caverna.
+Nos detalhes de uma expedição, duas consultas retornam os dados da expedição e
+todos os resumos dos participantes. Não há uma consulta por participante.
+Equipamentos usam `NOT EXISTS` para verificar conflitos no banco sem percorrer
+o histórico em Java. Amostras e arquivos binários são consultados separadamente
+quando solicitados, evitando carregar todo o grafo na listagem inicial.
+
+Essas soluções são específicas de cada caso de uso. Se uma nova tela listar
+várias coletas com suas amostras, chamar `listarAmostrasDaColeta` dentro de um
+laço voltaria a criar N+1. Nesse caso, buscaríamos as amostras de todas as coletas
+selecionadas em uma consulta com `WHERE a.coleta.id IN :ids`, agrupando os
+resultados por coleta. Também evitaríamos buscar várias coleções simultaneamente
+com fetch join, pois isso pode multiplicar as linhas do resultado.
+
+O teste `coletasFazemFetchDoSetorEDoPesquisadorSemNMaisUm` acessa setor e
+pesquisador das coletas retornadas e exige apenas um SELECT, mantendo as amostras
+não inicializadas. Os demais testes verificam as contagens da tabela anterior.
+Essa verificação cobre as consultas implementadas, não qualquer acesso futuro
+aos relacionamentos do modelo.
+
+## Como executar o projeto
+
+É necessário ter JDK 17 e Maven disponíveis no terminal. Para executar a
+aplicação, também é necessário um PostgreSQL ativo. Os comandos abaixo devem
+ser executados na raiz do projeto, onde está o `pom.xml`.
+
+```powershell
+java -version
+mvn -version
+```
+
+Se um comando não for reconhecido, configure o diretório `bin` da instalação
+correspondente no `PATH` e reabra o terminal. O projeto é uma aplicação de
+console; não inicia uma página web.
+
+### Preparar o banco e compilar
+
+Crie o banco uma única vez pelo pgAdmin ou por um cliente SQL, conectado a um
+banco existente, como `postgres`:
+
+```sql
+CREATE DATABASE javerna;
+```
+
+A configuração local fica em `src/main/resources/META-INF/persistence.xml`.
+Por padrão, usa `jdbc:postgresql://localhost:5432/javerna`, usuário `postgres`
+e senha `postgres`. Ajuste os valores conforme a instalação. A classe
+`ConsultaExpedicoes` também aceita `JAVERNA_DB_URL`, `JAVERNA_DB_USER` e
+`JAVERNA_DB_PASSWORD` como variáveis de ambiente para substituir esses valores.
+O Hibernate cria ou atualiza as tabelas ao iniciar a persistência, com
+`hibernate.hbm2ddl.auto=update`.
+
+```powershell
+mvn clean compile
+```
+
+Esse comando limpa os arquivos gerados e compila o código. Ele não executa a
+carga nem as consultas.
+
+### Povoar e consultar
+
+Para executar a carga demonstrativa no PostgreSQL configurado:
+
+```powershell
+mvn compile exec:java "-Dexec.args=--povoar"
+```
+
+A carga ampliada contempla três cavernas, seis setores, três pesquisadores,
+dois guias, seis equipamentos, cinco expedições, seis coletas e seis amostras.
+Há cavernas sem expedições, pesquisador sem coletas e setores sem coletas,
+permitindo demonstrar consultas com `LEFT JOIN`. Com as cinco expedições DEMO
+já presentes, uma nova execução informa que nenhum dado foi alterado.
+
+Para listar expedições planejadas inteiramente contidas em um intervalo:
+
+```powershell
+mvn compile exec:java "-Dexec.args=2026-01-01T00:00 2026-12-31T23:59 PLANEJADA"
+```
+
+Os três argumentos são início, fim e situação. As situações aceitas são
+`PLANEJADA`, `AUTORIZADA`, `EM_ANDAMENTO`, `CONCLUIDA` e `CANCELADA`.
+No PowerShell, mantenha todo o argumento `-Dexec.args=...` entre aspas.
+O terminal exibe o SQL, os resumos encontrados e a quantidade de expedições.
+
+O Maven executa `ConsultaExpedicoes.main`, configurado no `pom.xml`. Essa classe
+abre a persistência e chama `ExpedicaoConsultaRepository` dentro de
+`TransacaoJta`. O repositório usa `createNamedQuery` para localizar a consulta
+no `orm.xml`, fornece os parâmetros e devolve os resultados. O XML não é
+executado diretamente.
+
+### Executar as verificações
+
+Para compilar, executar todos os testes e gerar o JAR:
+
+```powershell
+mvn clean verify
+```
+
+Para executar somente a classe de testes que cobre as consultas e outras regras
+de persistência:
+
+```powershell
+mvn "-Dtest=ConsultasIntegracaoTest" test
+```
+
+Para verificar especificamente a solução de N+1 nas coletas:
+
+```powershell
+mvn "-Dtest=ConsultasIntegracaoTest#coletasFazemFetchDoSetorEDoPesquisadorSemNMaisUm" test
+```
+
+Os testes usam PostgreSQL temporário com dados próprios; não consultam nem
+alteram o banco local povoado. A primeira execução precisa baixar dependências
+e os binários do banco. O resultado esperado é `BUILD SUCCESS`, sem falhas ou
+erros nos testes. Os relatórios ficam em `target/surefire-reports/` e as
+evidências SQL em `target/consultas-verificadas.sql`.
+
 ## Verificação
 
 `mvn clean verify` inicia um PostgreSQL temporário e executa testes de integração
@@ -133,7 +299,7 @@ falhas ou erros, usando PostgreSQL 14.15 temporário.
 
 A carga demonstrativa é executada explicitamente pelo argumento `--povoar`.
 Ela grava dados fictícios em uma única transação JTA e não modifica registros
-quando as duas expedições de demonstração já existem. O teste da carga verifica
+quando as cinco expedições de demonstração já existem. O teste da carga verifica
 as seis consultas, repetição sem duplicação, preservação de dados existentes e
 rollback integral em caso de falha. Os anexos são PDFs demonstrativos, sem
 validade documental; as fotografias das amostras permanecem opcionais e ausentes.
