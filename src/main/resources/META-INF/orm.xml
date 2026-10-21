@@ -5,7 +5,7 @@
                       https://jakarta.ee/xml/ns/persistence/orm/orm_3_1.xsd"
                   version="3.1">
 
-
+    <!-- Lista expedicoes por periodo e situacao, retornando apenas os dados do resumo. -->
     <named-query name="Expedicao.listarPorPeriodoESituacao">
         <query>
             SELECT new br.edu.ifpb.pweb3.javerna.model.dto.ExpedicaoResumo(
@@ -18,6 +18,7 @@
         </query>
     </named-query>
 
+    <!-- Carrega os detalhes da expedicao sem buscar os arquivos binarios. -->
     <named-query name="Expedicao.buscarDetalhes">
         <query>
             SELECT new br.edu.ifpb.pweb3.javerna.model.dto.ExpedicaoDetalhes(
@@ -29,6 +30,7 @@
         </query>
     </named-query>
 
+    <!-- Complementa os detalhes da expedicao com os participantes e seus papeis. -->
     <named-query name="ParticipacaoExpedicao.listarResumos">
         <query>
             SELECT new br.edu.ifpb.pweb3.javerna.model.dto.ParticipanteResumo(
@@ -38,6 +40,7 @@
         </query>
     </named-query>
 
+    <!-- Lista as coletas da expedicao trazendo setor e pesquisador com fetch join. -->
     <named-query name="ColetaCientifica.listarPorExpedicao">
         <query>
             SELECT c FROM ColetaCientifica c
@@ -48,6 +51,7 @@
         </query>
     </named-query>
 
+    <!-- Consulta equipamentos disponiveis no periodo sem carregar o historico de utilizacoes. -->
     <named-query name="Equipamento.listarDisponiveisNoPeriodo">
         <query>
             SELECT eq FROM Equipamento eq
@@ -62,12 +66,14 @@
         </query>
     </named-query>
 
+    <!-- Busca as amostras somente quando os detalhes de uma coleta forem abertos. -->
     <named-query name="Amostra.listarPorColeta">
         <query>
             SELECT a FROM Amostra a WHERE a.coleta.id = :coletaId ORDER BY a.codigoCampo
         </query>
     </named-query>
 
+    <!-- Consultas separadas para baixar os arquivos binarios apenas quando solicitados. -->
     <named-query name="PlanoSeguranca.baixarMapa">
         <query>SELECT p.mapaRota FROM PlanoSeguranca p WHERE p.expedicao.id = :expedicaoId</query>
     </named-query>
