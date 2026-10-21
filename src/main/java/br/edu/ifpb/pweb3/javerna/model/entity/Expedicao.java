@@ -76,7 +76,7 @@ public class Expedicao {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "caverna_id", nullable = false)
-    private Caverna caverna;
+    private Caverna caverna; 
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
